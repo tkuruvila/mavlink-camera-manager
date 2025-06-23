@@ -1,0 +1,12 @@
+# MAVLink Camera Manager Configuration
+
+# MAVLink connection string
+MAVLINK_SRC=tcpout:192.168.2.2:5777
+
+# Logging verbosity (--verbose or empty for normal logging)
+VERBOSE=--verbose
+
+# Reset camera on start (--reset or empty to disable)
+RESET=--reset
+
+# Add any additional configuration parameters below

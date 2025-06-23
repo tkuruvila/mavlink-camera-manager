@@ -1,0 +1,57 @@
+# Stage 1: Build environment
+FROM rust:alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    build-base \
+    cmake \
+    pkgconf \
+    musl-dev \
+    gstreamer-dev \
+    gst-plugins-base-dev \
+    gst-plugins-good-dev \
+    gst-plugins-bad-dev \
+    gst-plugins-ugly-dev \
+    gst-rtsp-server-dev \
+    gstreamer-tools \
+    openssl-dev
+WORKDIR /build
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN cargo build --release --target=x86_64-unknown-linux-musl
+
+# Stage 2: Runtime environment
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    gstreamer \
+    gst-plugins-base \
+    gst-plugins-good \
+    gst-plugins-bad \
+    gst-plugins-ugly \
+    gst-libav \
+    gst-rtsp-server \
+    openssl \
+    ca-certificates
+WORKDIR /app
+
+# Copy the binary from builder stage
+COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/mavlink-camera-manager .
+
+# Copy configuration file
+COPY ./docker/config.txt /app/config.txt
+
+# Make the binary executable
+RUN chmod +x /mavlink-camera-manager
+
+# Expose ports
+EXPOSE 8554/tcp
+EXPOSE 5777/tcp
+
+# Convert shell form to exec form (JSON array)
+ENTRYPOINT ["./mavlink-camera-manager", "--mavlink=tcpout:192.168.2.2:5777", "--verbose", "--reset"]
+CMD []
